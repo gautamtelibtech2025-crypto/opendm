@@ -16,7 +16,7 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "OpenDM",
   description:
-    "Self-hosted Instagram comment-to-DM automation. Your own Meta app, your own Supabase, your own deployment.",
+    "Instagram comment-to-DM automation with Firebase, Cloud Run, and your own Meta app.",
 };
 
 export default function RootLayout({

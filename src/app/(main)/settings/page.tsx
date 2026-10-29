@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Instagram, CheckCircle2, XCircle, Loader2, Unlink, AlertTriangle, RefreshCw, Wrench, PauseCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createBrowserClient } from "@/lib/supabase";
+import { signOut } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase/client';
 import { apiClient, ApiError } from "@/lib/api/client";
 import { useInstagramAccounts, useRefreshInstagramToken, useResubscribeWebhook, useCheckSubscription } from "@/hooks/useInstagramAccounts";
 import { useSetupStatus } from "@/hooks/useSetup";
@@ -141,8 +142,8 @@ function SettingsContent() {
     };
 
     const handleSignOut = async () => {
-        const supabase = createBrowserClient();
-        await supabase.auth.signOut();
+        await fetch('/api/auth/session', { method: 'DELETE' });
+        await signOut(getFirebaseAuth());
         window.location.href = "/";
     };
 

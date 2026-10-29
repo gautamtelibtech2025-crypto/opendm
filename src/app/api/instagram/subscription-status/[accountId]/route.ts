@@ -4,7 +4,7 @@
  */
 
 import { getAuthenticatedUser, unauthorized } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { getSubscribedFields } from '@/lib/instagram/api';
 import { decrypt } from '@/lib/crypto';
 import { getEnv } from '@/lib/env';

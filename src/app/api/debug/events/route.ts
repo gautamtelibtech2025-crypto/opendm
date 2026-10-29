@@ -8,7 +8,7 @@
  */
 
 import { getAuthenticatedUser, requireAdmin, unauthorized, forbidden } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

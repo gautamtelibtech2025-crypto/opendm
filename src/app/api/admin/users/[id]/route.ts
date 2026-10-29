@@ -1,5 +1,5 @@
 import { forbidden, requireAdmin } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';

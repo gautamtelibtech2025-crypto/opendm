@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import { getAuthenticatedUser, unauthorized } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 import { DMResponseSchema, MAX_DM_RESPONSES } from '@/lib/api/schemas';
 import { assertAutomationCapacity, PlanLimitError } from '@/lib/tenant';

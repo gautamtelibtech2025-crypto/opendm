@@ -1,9 +1,9 @@
 /**
  * Typed API client for the app's own /api routes (same origin).
- * Attaches the current Supabase JWT as a Bearer token.
+ * Attaches the current Firebase ID token as a Bearer token.
  */
 
-import { createBrowserClient } from '@/lib/supabase/clients';
+import { getFirebaseAuth } from '@/lib/firebase/client';
 
 const API_URL = '/api';
 
@@ -26,13 +26,8 @@ export async function apiClient<T>(path: string, options?: RequestInit & { skipA
   };
 
   if (!options?.skipAuth) {
-    const supabase = createBrowserClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      headers['Authorization'] = `Bearer ${session.access_token}`;
-    }
+    const user = getFirebaseAuth().currentUser;
+    if (user) headers['Authorization'] = `Bearer ${await user.getIdToken()}`;
   }
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });

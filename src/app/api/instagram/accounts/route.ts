@@ -4,7 +4,7 @@
  */
 
 import { getAuthenticatedUser, unauthorized } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 import { computeTokenStatus } from '@/lib/api/schemas';
 
@@ -30,7 +30,7 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json({ error: 'Failed to fetch accounts' }, { status: 500 });
   }
 
-  const accounts = (data ?? []).map((account) => {
+  const accounts = (data ?? []).map((account: any) => {
     const { status, daysRemaining } = computeTokenStatus(account.token_expires_at as string | null);
     const pausedUntil = account.paused_until as string | null;
     const isPaused = !!pausedUntil && new Date(pausedUntil).getTime() > Date.now();

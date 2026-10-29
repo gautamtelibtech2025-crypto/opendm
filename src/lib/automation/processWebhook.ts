@@ -10,7 +10,7 @@
  *                 → plain DMs → dm_reply keyword match
  */
 
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 import { debugLog } from '@/lib/debugLog';
 import { keywordMatches } from '@/lib/automation/keywordMatch';
@@ -144,7 +144,7 @@ async function processCommentEvent(
   }
 
   debugLog('webhook', 'info', 'automations_fetch', 'ok', `Checking ${automations.length} active automation(s)`, {
-    automationIds: automations.map((a) => a.id),
+    automationIds: automations.map((a: any) => a.id),
   });
 
   let enqueued = 0;

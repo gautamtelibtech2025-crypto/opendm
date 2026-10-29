@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    { "collectionGroup": "instagram_accounts", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "user_id", "order": "ASCENDING" }, { "fieldPath": "is_active", "order": "ASCENDING" }, { "fieldPath": "created_at", "order": "DESCENDING" }] },
+    { "collectionGroup": "automations", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "instagram_account_id", "order": "ASCENDING" }, { "fieldPath": "type", "order": "ASCENDING" }, { "fieldPath": "is_active", "order": "ASCENDING" }] },
+    { "collectionGroup": "automations", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "user_id", "order": "ASCENDING" }, { "fieldPath": "created_at", "order": "DESCENDING" }] },
+    { "collectionGroup": "contacts", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "instagram_account_id", "order": "ASCENDING" }, { "fieldPath": "last_interaction_at", "order": "DESCENDING" }] },
+    { "collectionGroup": "dm_jobs", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "instagram_account_id", "order": "ASCENDING" }, { "fieldPath": "created_at", "order": "ASCENDING" }] }
+  ],
+  "fieldOverrides": [
+    { "collectionGroup": "job_queue", "fieldPath": "payload", "indexes": [] },
+    { "collectionGroup": "debug_events", "fieldPath": "metadata", "indexes": [] }
+  ]
+}

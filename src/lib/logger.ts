@@ -1,7 +1,7 @@
 /**
  * Lightweight structured logger.
  *
- * JSON-line output that both Vercel and Cloudflare log viewers parse natively.
+ * JSON-line output for Cloud Run structured-log ingestion.
  * Never log tokens, secrets, or full webhook bodies.
  */
 

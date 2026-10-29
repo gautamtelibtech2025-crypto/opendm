@@ -14,7 +14,7 @@
  */
 
 import { getAuthenticatedUser, unauthorized } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -86,7 +86,7 @@ export async function GET(request: Request): Promise<Response> {
     logger.error({ err: accErr }, 'Failed to fetch accounts');
     return Response.json({ error: 'Failed to load analytics' }, { status: 500 });
   }
-  const ownedIds = (accounts ?? []).map((a) => a.id as string);
+  const ownedIds = (accounts ?? []).map((a: any) => a.id as string);
 
   // Optional per-account scoping. SECURITY: the id must be user-owned.
   let accountIds = ownedIds;

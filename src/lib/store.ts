@@ -3,19 +3,21 @@
 /**
  * Zustand global auth store.
  *
- * Populated by the Supabase onAuthStateChange listener in AppProviders.
+ * Populated by the Firebase auth-state listener in AppProviders.
  * Components that need the current user read from this store instead of
- * calling supabase.auth.getUser() on every render.
+ * calling Firebase Auth on every render.
  */
 
 import { create } from 'zustand';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User } from 'firebase/auth';
+
+interface FirebaseSession { access_token: string; }
 
 interface AuthStore {
   user: User | null;
-  session: Session | null;
+  session: FirebaseSession | null;
   isLoading: boolean;
-  setAuth: (user: User | null, session: Session | null) => void;
+  setAuth: (user: User | null, session: FirebaseSession | null) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
 }

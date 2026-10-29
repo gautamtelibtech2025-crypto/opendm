@@ -6,7 +6,7 @@
  * from the engine so contact bookkeeping can never slow down or break a send.
  */
 
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('contacts');

@@ -4,7 +4,7 @@
  */
 
 import { getAuthenticatedUser, unauthorized } from '@/lib/auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
@@ -29,7 +29,7 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json({ error: 'Failed to fetch contacts' }, { status: 500 });
   }
 
-  const accountIds = (accounts ?? []).map((a) => a.id as string);
+  const accountIds = (accounts ?? []).map((a: any) => a.id as string);
   if (accountIds.length === 0) {
     return Response.json({ contacts: [] });
   }

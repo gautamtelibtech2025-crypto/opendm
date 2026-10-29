@@ -9,7 +9,7 @@
  *     Invalid → 403 immediately. No DB queries before this check.
  *  2. 200 returned within 5 seconds. All real work happens in `after()` -
  *     the response is sent first, processing continues in the background of
- *     the same invocation (supported on Vercel and Cloudflare via OpenNext).
+ *     the same invocation; durable delivery is subsequently handled by Cloud Tasks.
  */
 
 import { after } from 'next/server';

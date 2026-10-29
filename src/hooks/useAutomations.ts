@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, ApiError } from '@/lib/api/client';
-import { createBrowserClient } from '@/lib/supabase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { getFirebaseAuth, getFirebaseStorage } from '@/lib/firebase/client';
 
 export interface AutomationFromDB {
   id: string;
@@ -85,11 +86,10 @@ export interface UpdateAutomationPayload {
   dm_responses?: DMResponse[];
 }
 
-/** Upload base64 card images to Supabase Storage and return responses with public URLs. */
+/** Upload base64 card images to Firebase Storage and return fetchable URLs. */
 async function processCardImages(responses: DMResponse[]): Promise<DMResponse[]> {
-  const supabase = createBrowserClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return responses;
+  const user = getFirebaseAuth().currentUser;
+  if (!user) return responses;
 
   return Promise.all(
     responses.map(async (r) => {
@@ -104,19 +104,12 @@ async function processCardImages(responses: DMResponse[]): Promise<DMResponse[]>
       const blob = new Blob([byteArray], { type: mimeType });
 
       const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
-      const path = `${session.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-      const { data: uploadData, error } = await supabase.storage
-        .from('card-images')
-        .upload(path, blob, { contentType: mimeType, upsert: false });
-
-      if (error || !uploadData) {
-        console.warn('Card image upload failed:', error?.message);
-        return r;
-      }
-
-      const { data: { publicUrl } } = supabase.storage.from('card-images').getPublicUrl(uploadData.path);
-      return { ...r, cardImage: publicUrl };
+      const path = `card-images/${user.uid}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      try {
+        const object = ref(getFirebaseStorage(), path);
+        await uploadBytes(object, blob, { contentType: mimeType });
+        return { ...r, cardImage: await getDownloadURL(object) };
+      } catch (error) { console.warn('Card image upload failed:', error); return r; }
     }),
   );
 }

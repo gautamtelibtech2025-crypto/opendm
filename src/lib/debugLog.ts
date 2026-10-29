@@ -5,7 +5,7 @@
  * the automation flow; failures are swallowed after a console note.
  */
 
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 
 export type DebugLevel = 'info' | 'warn' | 'error';
 export type DebugStatus = 'ok' | 'error' | 'skipped' | 'processing';

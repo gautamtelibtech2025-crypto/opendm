@@ -1,5 +1,5 @@
 /**
- * Postgres-native job queue (replaces BullMQ + Redis).
+ * Firestore-backed durable job record with Cloud Tasks dispatch.
  *
  * Jobs live in the job_queue table. Claiming uses the claim_due_jobs RPC
  * (FOR UPDATE SKIP LOCKED) so any number of concurrent serverless invocations
@@ -9,9 +9,10 @@
  * can never create a second job (mirrors BullMQ's jobId dedupe).
  */
 
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 import { debugLog } from '@/lib/debugLog';
+import { enqueueAutomationTask } from '@/lib/automation/cloudTasks';
 import type { AutoDmJobPayload, JobQueueRow } from '@/lib/types';
 
 const logger = createLogger('queue');
@@ -46,7 +47,15 @@ export async function enqueueJob(
     });
     return null;
   }
-  return (data?.id as string) ?? null;
+  const jobId = (data?.id as string) ?? null;
+  if (jobId) {
+    try { await enqueueAutomationTask(jobId, payload); }
+    catch (taskError) {
+      // The Firestore job remains durable and is recovered by the scheduled worker.
+      logger.error({ err: taskError, jobId }, 'Cloud Task enqueue failed; job retained for reconciliation');
+    }
+  }
+  return jobId;
 }
 
 /** Atomically claims up to `limit` due jobs for this invocation. */

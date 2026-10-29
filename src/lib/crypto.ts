@@ -2,8 +2,7 @@
  * AES-256-GCM encryption for secrets at rest (Instagram tokens, Meta App Secret).
  *
  * Output format: iv_hex:ciphertext_hex:authtag_hex - self-contained.
- * Runs on the Node runtime (Vercel) and on Cloudflare Workers via the
- * `nodejs_compat` flag (node:crypto is supported by workerd).
+ * Runs on the Node.js runtime used by local development and Cloud Run.
  */
 
 import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual, createHmac } from 'node:crypto';

@@ -1,41 +1,18 @@
-/** Server-side subscription and tenant-limit enforcement. */
+/** Server-side subscription and tenant-limit enforcement backed by Firestore. */
+import { getAdminFirestore } from '@/lib/firebase/admin';
 
-import { createServiceClient } from '@/lib/supabase/service';
-
-export class PlanLimitError extends Error {
-  constructor(public readonly limit: 'instagram_accounts' | 'active_automations' | 'monthly_triggers') {
-    super(`Your current plan has reached its ${limit.replace('_', ' ')} limit.`);
-  }
-}
-
+export class PlanLimitError extends Error { constructor(public readonly limit: 'instagram_accounts' | 'active_automations' | 'monthly_triggers') { super(`Your current plan has reached its ${limit.replace('_', ' ')} limit.`); } }
 interface Limits { max_instagram_accounts: number; max_active_automations: number; max_monthly_triggers: number; }
+const freePlan: Limits = { max_instagram_accounts: 1, max_active_automations: 3, max_monthly_triggers: 1000 };
 
 export async function getTenantLimits(userId: string): Promise<Limits> {
-  const db = createServiceClient();
-  const { data, error } = await db
-    .from('customer_subscriptions')
-    .select('status, subscription_plans(max_instagram_accounts, max_active_automations, max_monthly_triggers)')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (error || !data || !['trialing', 'active'].includes(data.status as string)) {
-    throw new PlanLimitError('instagram_accounts');
-  }
-  const plan = data.subscription_plans as unknown as Limits | null;
-  if (!plan) throw new PlanLimitError('instagram_accounts');
-  return plan;
+  const db = getAdminFirestore(); const subscription = (await db.collection('customerSubscriptions').doc(userId).get()).data();
+  if (!subscription || !['trialing', 'active'].includes(subscription.status)) throw new PlanLimitError('instagram_accounts');
+  if (subscription.plan_id === 'free') return freePlan;
+  const plan = (await db.collection('plans').doc(subscription.plan_id).get()).data();
+  if (!plan?.is_active) throw new PlanLimitError('instagram_accounts');
+  return { max_instagram_accounts: plan.max_instagram_accounts, max_active_automations: plan.max_active_automations, max_monthly_triggers: plan.max_monthly_triggers };
 }
-
-export async function assertInstagramAccountCapacity(userId: string): Promise<void> {
-  const [limits, db] = await Promise.all([getTenantLimits(userId), Promise.resolve(createServiceClient())]);
-  const { count, error } = await db.from('instagram_accounts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true);
-  if (error) throw error;
-  if ((count ?? 0) >= limits.max_instagram_accounts) throw new PlanLimitError('instagram_accounts');
-}
-
-export async function assertAutomationCapacity(userId: string, willBeActive: boolean): Promise<void> {
-  if (!willBeActive) return;
-  const [limits, db] = await Promise.all([getTenantLimits(userId), Promise.resolve(createServiceClient())]);
-  const { count, error } = await db.from('automations').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true);
-  if (error) throw error;
-  if ((count ?? 0) >= limits.max_active_automations) throw new PlanLimitError('active_automations');
-}
+async function activeCount(collection: string, userId: string): Promise<number> { return (await getAdminFirestore().collection(collection).where('user_id', '==', userId).where('is_active', '==', true).count().get()).data().count; }
+export async function assertInstagramAccountCapacity(userId: string): Promise<void> { const [limits, count] = await Promise.all([getTenantLimits(userId), activeCount('instagram_accounts', userId)]); if (count >= limits.max_instagram_accounts) throw new PlanLimitError('instagram_accounts'); }
+export async function assertAutomationCapacity(userId: string, willBeActive: boolean): Promise<void> { if (!willBeActive) return; const [limits, count] = await Promise.all([getTenantLimits(userId), activeCount('automations', userId)]); if (count >= limits.max_active_automations) throw new PlanLimitError('active_automations'); }

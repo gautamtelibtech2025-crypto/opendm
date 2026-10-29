@@ -8,7 +8,7 @@
  */
 
 import { getMetaSettings } from '@/lib/settings';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import {
   verifyOAuthState,
   exchangeCodeForToken,
@@ -91,14 +91,12 @@ export async function GET(request: Request): Promise<Response> {
       }
     }
 
-    // Guarantee the FK target exists. Users created in the Supabase dashboard
-    // BEFORE the migrations were applied have no profiles row (the auto-create
-    // trigger didn't exist yet) - backfill it here so the account insert can
-    // never hit a foreign-key violation.
+    // Ensure a Firebase customer document exists before connecting an account.
     await db.from('profiles').upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true });
 
     const { error } = await db.from('instagram_accounts').upsert(
       {
+        ...(existingAccount ? { id: existingAccount.id } : {}),
         user_id: userId,
         instagram_user_id: profile.user_id,
         username: profile.username,
@@ -140,9 +138,7 @@ export async function GET(request: Request): Promise<Response> {
 }
 
 /**
- * Human-readable message from anything thrown - including Supabase/Postgrest
- * error objects, which are not Error instances and stringify to
- * "[object Object]" otherwise.
+ * Human-readable message from unknown route/provider error objects.
  */
 function describeError(err: unknown): string {
   if (err instanceof Error) return err.message;

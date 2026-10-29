@@ -2,9 +2,8 @@
  * Background maintenance endpoint. Secured by CRON_SECRET.
  *
  * Called by:
- *  - Supabase pg_cron every minute (primary - the Setup Wizard generates the
- *    exact SQL snippet), and/or
- *  - Vercel daily cron (vercel.json) as a safety net.
+ *  - Cloud Scheduler / Cloud Run Job every minute as a recovery path, and/or
+ *  - Cloud Tasks for immediate durable worker dispatch.
  *
  * Does three things:
  *  1. Drains due queue jobs (rate-limit overflow, retries, stuck jobs).
@@ -13,7 +12,7 @@
  */
 
 import { processDueJobs } from '@/lib/automation/engine';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient } from '@/lib/firebase/service';
 import { refreshLongLivedToken } from '@/lib/instagram/oauth';
 import { decrypt, encrypt, safeCompare } from '@/lib/crypto';
 import { getEnv } from '@/lib/env';

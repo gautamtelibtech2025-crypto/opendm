@@ -2,7 +2,7 @@
  * AutoDM job processors - battle-tested logic, adapted
  * for serverless execution with three extra safety layers:
  *
- *  1. Postgres rate limiter - check_and_record_dm_rate_limit RPC, atomic,
+ *  1. Firestore/Cloud Run rate limiter - check_and_record_dm_rate_limit adapter,
  *     180 DMs/hour rolling window per account (20-DM buffer under Meta's 200).
  *  2. Human-like jitter - a randomized 2-5s pause before every send, so
  *     automated replies never look machine-instant to Instagram.
@@ -20,8 +20,7 @@
  *  - throw anything else           → retry with backoff (max_attempts guard)
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { createServiceClient } from '@/lib/supabase/service';
+import { createFirestoreService as createServiceClient, type FirestoreService } from '@/lib/firebase/service';
 import { createLogger } from '@/lib/logger';
 import { debugLog } from '@/lib/debugLog';
 import { decrypt } from '@/lib/crypto';
@@ -91,7 +90,7 @@ async function sendOneResponse(
  * Best-effort sequential delivery of configured responses for the 1-step flow
  * (no reveal button). Per-response failures are logged and skipped rather than
  * thrown - the opening DM already went out and is dedup-recorded, so a retry
- * could never resend it; losing one response beats losing the whole flow.
+ * could never send it again; losing one response beats losing the whole flow.
  */
 async function deliverResponsesBestEffort(
   payload: AutoDmJobPayload,
@@ -185,7 +184,7 @@ function recordExtraSends(accountId: string, extraCount: number): void {
   })();
 }
 
-async function checkRateLimit(db: SupabaseClient, accountId: string): Promise<void> {
+async function checkRateLimit(db: FirestoreService, accountId: string): Promise<void> {
   const { data, error } = await db.rpc('check_and_record_dm_rate_limit', {
     p_account_id: accountId,
     p_limit: DM_LIMIT_PER_HOUR,
@@ -843,7 +842,7 @@ export async function processFollowUpDmJob(payload: AutoDmJobPayload): Promise<v
 type JobStatus = 'queued' | 'processing' | 'sent' | 'failed' | 'skipped';
 
 export async function markJobStatus(
-  db: SupabaseClient,
+  db: FirestoreService,
   payload: AutoDmJobPayload,
   status: JobStatus,
   errorMessage: string | null,
